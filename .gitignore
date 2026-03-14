@@ -1,0 +1,10 @@
+# local secrets
+boyds-little-login-library-for-php_constants/*db_connection_constants.php
+
+# environment files
+.env
+.env.*
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
