@@ -1,7 +1,6 @@
 # Project TODO
 
 ## 🔧 In Progress
-- [ ] git init
 - [ ] refactor method names and code flow as necessary
 - [ ] generate architecture md
 - [ ] generate readme
@@ -29,3 +28,4 @@
 - [X] symlink login.php to public_htmlppleaeswe
 - [X] handle redirect to login.php
 - [X] generate architecture folders and files
+- [X] git init
