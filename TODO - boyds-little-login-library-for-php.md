@@ -1,15 +1,18 @@
 # Project TODO
 
 ## 🔧 In Progress
-- [ ] refactor method names and code flow as necessary
+- [ ] boyds-little-login-library-for-php-
+- [ ] refactor class names as necessary
+- [ ] refactor method names as necessary
+- [ ] refactor nav constants
 - [ ] generate architecture md
 - [ ] generate readme
-- [ ] review for functionality after refactor
 - [ ] 
 
 ## 📌 Next Tasks
+- [ ] review for functionality after refactor
 - [ ] update readme
-- [ ] update git and github
+- [ ] refactor and rename auth.php to focus on login, create monitoring file for ongoing security checks
 - [ ] 
 
 ## 🧭 Future Enhancements
