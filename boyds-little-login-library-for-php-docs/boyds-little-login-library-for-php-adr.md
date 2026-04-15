@@ -12,7 +12,7 @@ on initial load
 
 on form submissioin
 1. login.php . process_login_attempt()
-2. boyds-little-login-library-for-php_controller.php . Auth::validateCsrfToken()
+2. boyds-little-login-library-for-php_controller.php . Auth::validateCsrfToken() -- boyds-little-login-library-for-php-user-authorization.php --
 3. boyds-little-login-library-for-php_controller.php . verify_no_existing_user_credentials()
 4. boyds-little-login-library-for-php_controller.php . verify_entry_of_username_and_password()
 5. boyds-little-login-library-for-php_controller.php . validateUser($user_name)

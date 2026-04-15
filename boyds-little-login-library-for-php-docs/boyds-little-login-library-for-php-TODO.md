@@ -1,8 +1,7 @@
 # Project TODO
 
 ## 🔧 In Progress
-- [ ] boyds-little-login-library-for-php-
-- [ ] refactor class names as necessary
+- [ ] refactor nav constants
 - [ ] refactor method names as necessary
 - [ ] refactor nav constants
 - [ ] generate architecture md
@@ -32,3 +31,4 @@
 - [X] handle redirect to login.php
 - [X] generate architecture folders and files
 - [X] git init
+- [X] rename all classes with boyds-little-login-library-for-php-

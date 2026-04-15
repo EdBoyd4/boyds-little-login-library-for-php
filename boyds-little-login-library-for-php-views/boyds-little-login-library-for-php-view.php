@@ -1,12 +1,12 @@
 <?php
 
-function do_html_header($title, $detailed_title) {
+function do_html_header($pageTitle, $detailedTitle) {
 ?>
 <!doctype html>
   <html>
   <head>
     <meta charset="utf-8">
-    <title><?php echo htmlspecialchars($title);?></title>
+    <title><?php echo htmlspecialchars($pageTitle);?></title>
     <style>
       body { font-family: Arial, Helvetica, sans-serif; font-size: 13px }
       li, td { font-family: Arial, Helvetica, sans-serif; font-size: 13px }
@@ -18,12 +18,12 @@ function do_html_header($title, $detailed_title) {
   </head>
   <body>
   <div>
-      <h1><?php echo htmlspecialchars($title);?></h1>
+      <h1><?php echo htmlspecialchars($pageTitle);?></h1>
   </div>
   <hr />
 <?php
-  if($title) {
-    do_html_heading(htmlspecialchars($detailed_title));
+  if($pageTitle) {
+    do_html_heading(htmlspecialchars($detailedTitle));
   }
 }
 
@@ -68,8 +68,8 @@ function display_login_form(string $csrfToken) {
 <?php
 }
 
-function display_login_page() {
-    do_html_header('Clarium Investigations User Portal', 'Investigator Log In');
+function display_login_page($pageTitle, $detailedTitle) {
+    do_html_header($pageTitle, $detailedTitle);
     $csrfToken = Auth::generateCsrfToken();
     display_login_form($csrfToken);
     do_html_footer();
