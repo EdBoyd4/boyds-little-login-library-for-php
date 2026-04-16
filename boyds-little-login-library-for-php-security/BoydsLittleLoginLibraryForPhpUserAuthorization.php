@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-require_once CLAR_LOGIN_LIBRARY_CONSTANTS . '/boyds-little-login-library-for-php_user_constants.php';
+// require_once CLAR_LOGIN_LIBRARY_CONSTANTS . '/boyds-little-login-library-for-php_user_constants.php';
 
 class Auth
 {

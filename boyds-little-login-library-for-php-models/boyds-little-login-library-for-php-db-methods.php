@@ -1,6 +1,6 @@
 <?php 
-    require_once('sec_db_cnx_cnstnts.php');
-    require_once('sec_db_cnstnts.php');
+    require_once(BOYDS_LOGIN_LIBRARY_CONSTANTS.'/boyds-little-login-library-for-php-db-connection-constants.php');
+    require_once(BOYDS_LOGIN_LIBRARY_CONSTANTS.'/boyds-little-login-library-for-php-db-constants.php');
 
     $sourceOfPower = new mysqli($dbhost, $dbuser, $dbpass, $dbname);
     if ($sourceOfPower->connect_error) die($sourceOfPower->connect_error);

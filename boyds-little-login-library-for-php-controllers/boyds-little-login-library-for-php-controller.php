@@ -1,10 +1,10 @@
 <?php
 declare(strict_types=1);
 
-function process_login_attempt(): void
+function process_login_attempt(array $pageCaptionArray): void
 {
     // CSRF: your Auth::validateCsrfToken() dies() if invalid, so this is definitive.
-    Auth::validateCsrfToken();
+    BoydsLittleLoginLibraryForPhpUserAuthorization::validateCsrfToken();
 
     $log_in_creds = verify_no_existing_user_credentials();
     if ($log_in_creds !== TRUE) {
