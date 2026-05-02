@@ -1,7 +1,4 @@
 <?php
-session_start();
-
-// require_once CLAR_LOGIN_LIBRARY_CONSTANTS . '/boyds-little-login-library-for-php_user_constants.php';
 
 class Auth
 {
@@ -73,19 +70,29 @@ class Auth
 
     public static function generateCsrfToken(): string
     {
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
+        }
         $token = bin2hex(random_bytes(32));
-        $_SESSION[CSRF] = $token;              
+        $_SESSION[CSRF] = $token;
         return $token;
     }
 
-    public static function validateCsrfToken(): void
+    public static function validateCsrfToken(): bool
     {
-        if (
-            empty($_POST[CSRF]) ||
-            empty($_SESSION[CSRF]) ||
-            !hash_equals($_SESSION[CSRF], $_POST[CSRF])
-        ) {
-            die('Invalid CSRF token.');
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            return false;
         }
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
+        }
+        $valid = (
+            !empty($_POST[CSRF]) &&
+            !empty($_SESSION[CSRF]) &&
+            hash_equals($_SESSION[CSRF], $_POST[CSRF])
+        );
+        // One-time token: invalidate regardless of result
+        unset($_SESSION[CSRF]);
+        return $valid;
     }
 }

@@ -1,9 +1,6 @@
 <?php
 
-function do_html_header($pageCaptionArray){
-	//get each element from array
-	//$pageTitle
-	//$detailedTitle
+function do_html_header(string $pageTitle, string $detailedTitle): void{
 	?>
 	<!doctype html>
 	<html>
@@ -71,33 +68,32 @@ function do_html_header($pageCaptionArray){
 		<?php
 	}
 
-	function display_login_form(string $csrfToken){
+	function display_login_form(string $csrfToken, ?string $errorText = null): void
+	{
 		?>
-
 		<form name="login" method="post" action="">
-			<input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
-
+			<input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
 			<div class="formblock">
-			<h2>Log In Here</h2>
-
-			<p><label for="username">Username:</label><br />
-				<input type="text" name="username" id="username" required autocomplete="username" />
-
-			<p><label for="password">Password:</label><br />
-				<input type="password" name="password" id="password" required autocomplete="current-password" />
-
+				<h2>Log In Here</h2>
+				<?php if ($errorText !== null && $errorText !== ''): ?>
+					<p class="error"><?= htmlspecialchars($errorText, ENT_QUOTES, 'UTF-8') ?></p>
+				<?php endif; ?>
+				<p>
+					<label for="username">Username:</label><br>
+					<input type="text" name="username" id="username" required autocomplete="username">
+				</p>
+				<p>
+					<label for="password">Password:</label><br>
+					<input type="password" name="password" id="password" required autocomplete="current-password">
+				</p>
 				<button type="submit" value="login" name="login">Log In</button>
 			</div>
-
 		</form>
 		<?php
 	}
 
-	function display_login_page($pageCaptionArray){
-		do_html_header($pageCaptionArray);
-		//is this needed for each re-instantiation?
-		$csrfToken = BoydsLittleLoginLibraryForPhpUserAuthorization::generateCsrfToken();
-		
-		display_login_form($csrfToken);
+	function display_login_page(string $pageTitle, string $detailedTitle, string $csrfToken, ?string $errorText = null){
+		do_html_header($pageTitle, $detailedTitle);		
+		display_login_form($csrfToken, $errorText);
 		do_html_footer();
 	}
