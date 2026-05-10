@@ -7,4 +7,4 @@ boyds-little-login-library-for-php_constants/*db_connection_constants.php
 
 # OS/editor noise
 .DS_Store
-Thumbs.db
+Thumbs.dbvendor/
