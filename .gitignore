@@ -7,4 +7,10 @@ boyds-little-login-library-for-php_constants/*db_connection_constants.php
 
 # OS/editor noise
 .DS_Store
-Thumbs.dbvendor/
+Thumbs.db
+
+# Dependencies
+vendor/
+
+# SQL schema scripts
+src/Database/setup_audit_logs.sql
