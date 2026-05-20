@@ -12,5 +12,3 @@ Thumbs.db
 # Dependencies
 vendor/
 
-# SQL schema scripts
-src/Database/setup_audit_logs.sql
