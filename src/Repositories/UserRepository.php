@@ -6,6 +6,7 @@ namespace Boyd\LoginLibrary\Repositories;
 use Boyd\LoginLibrary\Config\LoginConfig;
 use Boyd\LoginLibrary\Database\Database;
 use Boyd\LoginLibrary\Models\User;
+use Exception;
 use PDO;
 
 class UserRepository
@@ -69,5 +70,95 @@ class UserRepository
             passwordHash: trim((string)$userData[$colPassword]),
             roles: $roles
         );
+    }
+    public function getAllRoles(): array
+    {
+        $tableRoles = $this->config->getTableRoles();
+        $colRoleId = $this->config->getColRoleId();
+        $colRoleName = $this->config->getColRoleName();
+
+        $sql = sprintf("SELECT %s, %s FROM %s ORDER BY %s", $colRoleId, $colRoleName, $tableRoles, $colRoleName);
+        $stmt = $this->database->getConnection()->query($sql);
+        
+        $roles = [];
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $roles[$row[$colRoleId]] = $row[$colRoleName];
+        }
+        return $roles;
+    }
+
+    public function addUser(string $username, string $password, array $roleIds = []): void
+    {
+        if ($this->findByUsername($username) !== null) {
+            throw new Exception("Username already exists.");
+        }
+
+        $tableUsers = $this->config->getTableUsers();
+        $colUsername = $this->config->getColUsername();
+        $colPassword = $this->config->getColPassword();
+
+        $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+
+        $sql = sprintf(
+            "INSERT INTO %s (%s, %s) VALUES (:username, :password)",
+            $tableUsers, $colUsername, $colPassword
+        );
+
+        $pdo = $this->database->getConnection();
+        $pdo->beginTransaction();
+
+        try {
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([
+                'username' => $username,
+                'password' => $hashedPassword
+            ]);
+
+            $userId = (int)$pdo->lastInsertId();
+
+            if (!empty($roleIds)) {
+                $tableUserRoles = $this->config->getTableUserRoles();
+                $colUserId = $this->config->getColUserId();
+                $colRoleId = $this->config->getColRoleId();
+
+                $roleSql = sprintf(
+                    "INSERT INTO %s (%s, %s) VALUES (:user_id, :role_id)",
+                    $tableUserRoles, $colUserId, $colRoleId
+                );
+                $roleStmt = $pdo->prepare($roleSql);
+                
+                foreach ($roleIds as $roleId) {
+                    $roleStmt->execute([
+                        'user_id' => $userId,
+                        'role_id' => (int)$roleId
+                    ]);
+                }
+            }
+
+            $pdo->commit();
+        } catch (Exception $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
+    }
+
+    public function updatePassword(int $userId, string $newPassword): void
+    {
+        $tableUsers = $this->config->getTableUsers();
+        $colUserId = $this->config->getColUserId();
+        $colPassword = $this->config->getColPassword();
+
+        $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+
+        $sql = sprintf(
+            "UPDATE %s SET %s = :password WHERE %s = :user_id",
+            $tableUsers, $colPassword, $colUserId
+        );
+
+        $stmt = $this->database->getConnection()->prepare($sql);
+        $stmt->execute([
+            'password' => $hashedPassword,
+            'user_id' => $userId
+        ]);
     }
 }
