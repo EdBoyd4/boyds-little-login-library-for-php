@@ -7,7 +7,7 @@ require_once __DIR__ . '/init_login.php';
 $authManager->enforceLogin();
 
 // (Optional) Enforce that the user must have a specific role
-// $authManager->requireRole('ADM');
+// $authManager->requireRole('System_Manager');
 
 // If the script reaches this point, the user is authenticated and active!
 $username = $_SESSION['user_name'] ?? 'Unknown User';

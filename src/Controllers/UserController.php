@@ -13,7 +13,8 @@ class UserController
     public function __construct(
         private UserRepository $userRepository,
         private SessionManager $sessionManager,
-        private ?SecurityAuditRepository $auditRepository = null
+        private ?SecurityAuditRepository $auditRepository = null,
+        private string $userManagerRole = 'System_Manager'
     ) {}
 
     /**
@@ -43,7 +44,7 @@ class UserController
 
                 if (empty($username) || empty($password)) {
                     $error = 'Please complete all required fields.';
-                } elseif (!in_array('CQM', $userRoles, true)) {
+                } elseif (!in_array($this->userManagerRole, $userRoles, true)) {
                     $error = 'Unauthorized: You do not have permission to create users.';
                 } else {
                     try {
@@ -84,6 +85,62 @@ class UserController
             'success' => $success,
             'csrfToken' => $this->sessionManager->generateCsrfToken(),
             'roles' => $this->userRepository->getAllRoles()
+        ];
+    }
+
+    /**
+     * @return array{error: ?string, success: ?string, csrfToken: string, users: array<int, array{id: int, username: string}>}
+     */
+    public function handleRemoveUserRequest(): array
+    {
+        $error = null;
+        $success = null;
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $csrfToken = $_POST['csrf_token'] ?? '';
+
+            if (!$this->sessionManager->validateCsrfToken($csrfToken)) {
+                http_response_code(403);
+                $error = 'Your session expired or form submission was invalid. Please try again.';
+            } else {
+                $userIdToRemove = (int)($_POST['user_id'] ?? 0);
+                $userRoles = $_SESSION['user_roles'] ?? [];
+                $currentUserId = $_SESSION['user_id'] ?? 0;
+
+                if ($userIdToRemove <= 0) {
+                    $error = 'Please select a valid user to remove.';
+                } elseif (!in_array($this->userManagerRole, $userRoles, true)) {
+                    $error = 'Unauthorized: You do not have permission to remove users.';
+                } elseif ($userIdToRemove === $currentUserId) {
+                    $error = 'You cannot remove your own account.';
+                } else {
+                    try {
+                        $this->userRepository->removeUser($userIdToRemove);
+                        $success = 'User removed successfully.';
+
+                        if ($this->auditRepository !== null) {
+                            $ipAddress = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+                            $this->sessionManager->startSession();
+                            
+                            $this->auditRepository->logEvent(
+                                'user_removed',
+                                $ipAddress,
+                                $_SESSION['user_name'] ?? 'Unknown User',
+                                sprintf('Removed user with ID: %d', $userIdToRemove)
+                            );
+                        }
+                    } catch (Exception $e) {
+                        $error = $e->getMessage();
+                    }
+                }
+            }
+        }
+
+        return [
+            'error' => $error,
+            'success' => $success,
+            'csrfToken' => $this->sessionManager->generateCsrfToken(),
+            'users' => $this->userRepository->getAllUsers()
         ];
     }
 }

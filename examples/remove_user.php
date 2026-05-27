@@ -2,23 +2,23 @@
 require_once __DIR__ . '/init_login.php';
 
 use Boyd\LoginLibrary\Controllers\UserController;
-use Boyd\LoginLibrary\Views\AddUserView;
+use Boyd\LoginLibrary\Views\RemoveUserView;
 
 // Enforce login and System_Manager role
 $authManager->requireRole('System_Manager');
 
 // Initialize Controller and View
 $userController = new UserController($userRepository, $sessionManager, $auditRepository);
-$addUserView = new AddUserView();
+$removeUserView = new RemoveUserView();
 
 // Handle the request
-$result = $userController->handleAddUserRequest();
+$result = $userController->handleRemoveUserRequest();
 
 // Render the view
-$addUserView->render(
-    pageTitle: 'Add New User',
+$removeUserView->render(
+    pageTitle: 'Remove User',
     csrfToken: $result['csrfToken'],
-    roles: $result['roles'],
+    users: $result['users'],
     error: $result['error'],
     success: $result['success']
 );

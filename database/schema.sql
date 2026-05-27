@@ -48,5 +48,8 @@ CREATE INDEX idx_audit_ip ON security_audit_logs(ip_address);
 CREATE INDEX idx_audit_user ON security_audit_logs(username_involved);
 CREATE INDEX idx_audit_event ON security_audit_logs(event_type);
 
--- Example Role Data (Optional)
--- INSERT INTO roles (role) VALUES ('admin'), ('editor'), ('user');
+-- Default Role Data
+-- NOTE: The 'system_manager' role is required by default in UserController.php 
+-- to allow adding/removing users. If you change or remove it, ensure you instantiate 
+-- UserController with your custom role.
+INSERT INTO roles (role) VALUES ('system_manager');

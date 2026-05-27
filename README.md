@@ -30,10 +30,12 @@ A reusable, secure, Object-Oriented PHP login library designed with data securit
    Copy your `.env.example` to `.env` in your project root and configure your database and application settings. (A template will be provided by your host application).
 
 3. **Initialize the Database Schema:**
-   Import the provided SQL schema into your database.
+   Import the provided SQL schema into your database. This will create the required tables and insert the default roles (including `system_manager`).
    ```bash
    mysql -u username -p database_name < vendor/ed-boyd/boyds-little-login-library-for-php/database/schema.sql
    ```
+   
+   *Note: Because creating users requires the `System_Manager` role, you must create your very first user directly in the database (or via an initial setup script) and map them to the `system_manager` role ID.*
 
 ## ⚙️ Configuration
 
@@ -104,15 +106,12 @@ if ($authManager->login($username, $password, $ipAddress)) {
 
 ```php
 // On a restricted page (e.g., dashboard.php)
-$authManager->requireLogin();
+$authManager->enforceLogin();
 
 // Optionally, require a specific role
-if (!$authManager->hasRole('admin')) {
-    header("Location: /unauthorized.php");
-    exit;
-}
+$authManager->requireRole('System_Manager');
 
-echo "Welcome to the secure area, " . htmlspecialchars($authManager->getCurrentUser()->getUsername());
+// If the script reaches this point, the user is authenticated and authorized!
 ```
 
 ## 📚 Documentation & Examples

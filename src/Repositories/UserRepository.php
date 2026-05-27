@@ -142,6 +142,59 @@ class UserRepository
         }
     }
 
+    /**
+     * @return array<int, array{id: int, username: string}>
+     */
+    public function getAllUsers(): array
+    {
+        $tableUsers = $this->config->getTableUsers();
+        $colUserId = $this->config->getColUserId();
+        $colUsername = $this->config->getColUsername();
+
+        $sql = sprintf(
+            "SELECT %s, %s FROM %s ORDER BY %s ASC",
+            $colUserId, $colUsername, $tableUsers, $colUsername
+        );
+
+        $stmt = $this->database->getConnection()->query($sql);
+        
+        $users = [];
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $users[] = [
+                'id' => (int)$row[$colUserId],
+                'username' => $row[$colUsername]
+            ];
+        }
+        return $users;
+    }
+
+    public function removeUser(int $userId): void
+    {
+        $pdo = $this->database->getConnection();
+        $pdo->beginTransaction();
+
+        try {
+            $tableUserRoles = $this->config->getTableUserRoles();
+            $colUserId = $this->config->getColUserId();
+            $tableUsers = $this->config->getTableUsers();
+
+            // Delete user's roles
+            $roleSql = sprintf("DELETE FROM %s WHERE %s = :user_id", $tableUserRoles, $colUserId);
+            $roleStmt = $pdo->prepare($roleSql);
+            $roleStmt->execute(['user_id' => $userId]);
+
+            // Delete user
+            $userSql = sprintf("DELETE FROM %s WHERE %s = :user_id", $tableUsers, $colUserId);
+            $userStmt = $pdo->prepare($userSql);
+            $userStmt->execute(['user_id' => $userId]);
+
+            $pdo->commit();
+        } catch (Exception $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
+    }
+
     public function updatePassword(int $userId, string $newPassword): void
     {
         $tableUsers = $this->config->getTableUsers();
