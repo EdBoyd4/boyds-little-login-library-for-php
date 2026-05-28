@@ -1,12 +1,12 @@
 <?php
 declare(strict_types=1);
 
-// 1. Tell Clarium where the Login Library's Autoloader is located!
+// 1. Tell your host application where the Login Library's Autoloader is located!
 require_once __DIR__ . '/../vendor/autoload.php';
 
-// 2. Load the environment variables from Clarium's root directory
+// 2. Load the environment variables from your Host Application's root directory
 // Adjust this path to point to the actual directory containing .env
-$dotenv = Dotenv\Dotenv::createImmutable('/home/xnbglkce/clarium');
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
 $dotenv->safeLoad();
 
 use Boyd\LoginLibrary\Config\LoginConfig;
@@ -19,10 +19,10 @@ use Boyd\LoginLibrary\Security\AuthManager;
 
 // 3. Initialize the Library Configuration using the .env variables
 $config = new LoginConfig(
-    dbHost: $_ENV['DB_HOST'] ?? 'localhost',
-    dbName: $_ENV['DB_NAME'] ?? '',
-    dbUser: $_ENV['DB_USER'] ?? '',
-    dbPass: $_ENV['DB_PASS'] ?? ''
+    dbHost: $_ENV['AUTH_DB_HOST'] ?? 'localhost',
+    dbName: $_ENV['AUTH_DB_NAME'] ?? '',
+    dbUser: $_ENV['AUTH_DB_USER'] ?? '',
+    dbPass: $_ENV['AUTH_DB_PASS'] ?? ''
 );
 
 // 4. Wire up the library dependencies

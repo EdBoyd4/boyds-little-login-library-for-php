@@ -66,10 +66,10 @@ use Boyd\LoginLibrary\Security\AuthManager;
 
 // 2. Build configuration
 $config = new LoginConfig(
-    $_ENV['DB_HOST'],
-    $_ENV['DB_NAME'],
-    $_ENV['DB_USER'],
-    $_ENV['DB_PASS']
+    $_ENV['AUTH_DB_HOST'],
+    $_ENV['AUTH_DB_NAME'],
+    $_ENV['AUTH_DB_USER'],
+    $_ENV['AUTH_DB_PASS']
 );
 
 // 3. Connect to Database
