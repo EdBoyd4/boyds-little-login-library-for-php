@@ -8,7 +8,7 @@ class RemoveUserView
     /**
      * @param array<int, array{id: int, username: string}> $users
      */
-    public function render(string $pageTitle, string $csrfToken, array $users, ?string $error = null, ?string $success = null): void
+    public function render(string $pageTitle, string $csrfToken, array $users, ?string $error = null, ?string $success = null, string $returnUrl = 'example_secure_page.php'): void
     {
         ?>
         <!doctype html>
@@ -60,7 +60,7 @@ class RemoveUserView
                 </form>
                 
                 <div class="nav">
-                    <a href="example_secure_page.php">Return to Dashboard</a>
+                    <a href="<?= htmlspecialchars($returnUrl, ENT_QUOTES, 'UTF-8') ?>">Return to Dashboard</a>
                 </div>
             </div>
         </body>

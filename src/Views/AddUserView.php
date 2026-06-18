@@ -5,7 +5,7 @@ namespace Boyd\LoginLibrary\Views;
 
 class AddUserView
 {
-    public function render(string $pageTitle, string $csrfToken, array $roles, ?string $error = null, ?string $success = null): void
+    public function render(string $pageTitle, string $csrfToken, array $roles, ?string $error = null, ?string $success = null, string $returnUrl = 'example_secure_page.php'): void
     {
         ?>
         <!doctype html>
@@ -66,7 +66,7 @@ class AddUserView
                 </form>
                 
                 <div class="nav">
-                    <a href="example_secure_page.php">Return to Dashboard</a>
+                    <a href="<?= htmlspecialchars($returnUrl, ENT_QUOTES, 'UTF-8') ?>">Return to Dashboard</a>
                 </div>
             </div>
         </body>
