@@ -6,6 +6,12 @@
 - [ ] ensure login method sets all the desired cookies
 - [ ] review authmanager.isLoggedIn to check for each of the monitoring / tracking coookies
 - [ ] review code for proper and thorough user monitoring method to be used on each page / with each AJAX call
+- [ ] 2FA/MFA support
+- [ ] Add email or app-based OTP after password verification for high-value accounts.
+- [ ] Session timeouts and idle expiration
+- [ ] Set appropriate session.gc_maxlifetime and implement idle timeout logic for security.
+- [ ] Gracefully handle DB errors using logs + generic messages.
+- [ ] Consider CSRF tokens if your architecture expands.
 
 ## 📌 Next Tasks
 - [ ] update readme
