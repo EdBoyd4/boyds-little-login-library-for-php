@@ -12,6 +12,10 @@ A reusable, secure, Object-Oriented PHP login library designed with data securit
 - **Role-Based Authorization**: Built-in support for user roles and mapping, allowing fine-grained access control on routes and actions.
 - **PSR-4 Compliant**: Fully namespaced and autoloadable via Composer.
 
+## ⚠️ Known Issues / Development Notes
+
+- **Session Regeneration**: In `SessionManager.php`, the `session_regenerate_id(true)` function call has been temporarily commented out for local development. This is because some modern browsers (e.g., Chrome) enforce strict `Secure/SameSite` behaviors during POST redirects on localhost IPv6 (`::1`) environments, which causes cookies to be dropped and the session to be lost. **CRITICAL: You MUST re-enable this function call before deploying to a production environment to protect against session fixation attacks.**
+
 ## 📋 Requirements
 
 - PHP >= 8.0

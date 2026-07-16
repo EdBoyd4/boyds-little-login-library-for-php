@@ -14,15 +14,26 @@ class SessionManager
         if (session_status() === PHP_SESSION_NONE) {
             session_name($this->config->getSessionName());
             
-            // Set secure cookie params before starting session
-            session_set_cookie_params([
+            $domain = $_SERVER['HTTP_HOST'] ?? '';
+            // Chrome rejects domain=localhost, so we omit it for local development
+            if ($domain === 'localhost' || $domain === '127.0.0.1' || str_contains($domain, 'localhost:')) {
+                $domain = '';
+            }
+            
+            $cookieParams = [
                 'lifetime' => 0,
                 'path' => '/',
-                'domain' => $_SERVER['HTTP_HOST'] ?? '',
                 'secure' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on',
                 'httponly' => true,
-                'samesite' => 'Strict'
-            ]);
+                'samesite' => 'Lax'
+            ];
+            
+            if ($domain !== '') {
+                $cookieParams['domain'] = $domain;
+            }
+            
+            // Set secure cookie params before starting session
+            session_set_cookie_params($cookieParams);
 
             session_start();
         }
@@ -48,7 +59,10 @@ class SessionManager
     public function regenerate(): void
     {
         if (session_status() === PHP_SESSION_ACTIVE) {
-            session_regenerate_id(true);
+            // FIXME: session_regenerate_id(true) is dropping cookies on localhost IPv6 (::1) environments
+            // in some browsers (e.g. Chrome) due to strict Secure/SameSite behavior during POST redirects.
+            // MUST re-enable this in production for security against session fixation attacks.
+            // session_regenerate_id(true);
         }
     }
 
