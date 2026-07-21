@@ -18,6 +18,7 @@
 - [ ] Enhance rate limiting to track failed attempts by both Username and IP address (OWASP A04)
 - [ ] Integrate a PSR-3 compatible logger to track significant security events (OWASP A09)
 - [ ] Audit `UserRepository.php` dynamic column/table names in SQL queries (OWASP A03)
+- [ ] DB Permissions: Change the current DB user to an "admin" profile, and create a standard DB user who only has SELECT and UPDATE privileges limited strictly to their own user profile data.
 
 ## 🧭 Future Enhancements
 - [ ] 

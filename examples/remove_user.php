@@ -5,14 +5,22 @@ use Boyd\LoginLibrary\Controllers\UserController;
 use Boyd\LoginLibrary\Views\RemoveUserView;
 
 // Enforce login and System_Manager role
-$authManager->requireRole('System_Manager');
+if ($authResult = $authManager->requireRole('System_Manager')) {
+    header("Location: " . $authResult->redirectUrl);
+    exit;
+}
 
 // Initialize Controller and View
 $userController = new UserController($userRepository, $sessionManager, $auditRepository);
 $removeUserView = new RemoveUserView();
 
 // Handle the request
-$result = $userController->handleRemoveUserRequest();
+$result = $userController->handleRemoveUserRequest(
+    method: $_SERVER['REQUEST_METHOD'],
+    csrfToken: $_POST['csrf_token'] ?? null,
+    userIdToRemove: isset($_POST['user_id']) ? (int)$_POST['user_id'] : null,
+    ipAddress: $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0'
+);
 
 // Render the view
 $removeUserView->render(

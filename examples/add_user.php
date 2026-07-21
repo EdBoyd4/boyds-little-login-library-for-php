@@ -5,14 +5,24 @@ use Boyd\LoginLibrary\Controllers\UserController;
 use Boyd\LoginLibrary\Views\AddUserView;
 
 // Enforce login and System_Manager role
-$authManager->requireRole('System_Manager');
+if ($authResult = $authManager->requireRole('System_Manager')) {
+    header("Location: " . $authResult->redirectUrl);
+    exit;
+}
 
 // Initialize Controller and View
 $userController = new UserController($userRepository, $sessionManager, $auditRepository);
 $addUserView = new AddUserView();
 
 // Handle the request
-$result = $userController->handleAddUserRequest();
+$result = $userController->handleAddUserRequest(
+    method: $_SERVER['REQUEST_METHOD'],
+    csrfToken: $_POST['csrf_token'] ?? null,
+    username: $_POST['username'] ?? null,
+    password: $_POST['password'] ?? null,
+    roles: $_POST['roles'] ?? [],
+    ipAddress: $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0'
+);
 
 // Render the view
 $addUserView->render(

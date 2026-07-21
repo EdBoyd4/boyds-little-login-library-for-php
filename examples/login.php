@@ -35,12 +35,25 @@ $view = new LoginView();
 $controller = new LoginController($authManager, $sessionManager);
 
 // 4. Handle the login request
-$result = $controller->handleRequest('/example_secure_page.php'); // Where users go after login
+$result = $controller->handleLogin(
+    method: $_SERVER['REQUEST_METHOD'],
+    username: $_POST['username'] ?? null,
+    password: $_POST['password'] ?? null,
+    csrfToken: $_POST['csrf_token'] ?? null,
+    requestedRedirect: $_GET['redirect'] ?? null,
+    defaultRedirectUrl: '/example_secure_page.php', // Where users go after login
+    ipAddress: $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0'
+);
+
+if ($result->success) {
+    header("Location: " . $result->redirectUrl);
+    exit;
+}
 
 // 5. Render the View!
 $view->render(
     pageTitle: 'Your Organization, Inc.',
     detailedTitle: 'Authorized Personnel Only',
-    csrfToken: $result['csrfToken'],
-    error: $result['error']
+    csrfToken: $result->csrfToken,
+    error: $result->error
 );

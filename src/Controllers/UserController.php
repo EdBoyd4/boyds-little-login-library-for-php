@@ -20,26 +20,24 @@ class UserController
     /**
      * @return array{error: ?string, success: ?string, csrfToken: string, roles: array}
      */
-    public function handleAddUserRequest(): array
-    {
+    public function handleAddUserRequest(
+        string $method,
+        ?string $csrfToken,
+        ?string $username,
+        ?string $password,
+        array $roles,
+        string $ipAddress = '0.0.0.0'
+    ): array {
         $error = null;
         $success = null;
 
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $csrfToken = $_POST['csrf_token'] ?? '';
-
-            if (!$this->sessionManager->validateCsrfToken($csrfToken)) {
-                http_response_code(403);
+        if ($method === 'POST') {
+            if (!$this->sessionManager->validateCsrfToken($csrfToken ?? '')) {
                 $error = 'Your session expired or form submission was invalid. Please try again.';
             } else {
-                $username = trim((string)($_POST['username'] ?? ''));
-                $password = trim((string)($_POST['password'] ?? ''));
-                $roles = $_POST['roles'] ?? [];
+                $username = trim($username ?? '');
+                $password = trim($password ?? '');
                 
-                if (!is_array($roles)) {
-                    $roles = [];
-                }
-
                 $userRoles = $_SESSION['user_roles'] ?? [];
 
                 if (empty($username) || empty($password)) {
@@ -52,8 +50,6 @@ class UserController
                         $success = 'User created successfully.';
 
                         if ($this->auditRepository !== null) {
-                            $ipAddress = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
-                            
                             // Let's get the role names for logging instead of IDs
                             $allRoles = $this->userRepository->getAllRoles();
                             $assignedRoleNames = [];
@@ -91,19 +87,20 @@ class UserController
     /**
      * @return array{error: ?string, success: ?string, csrfToken: string, users: array<int, array{id: int, username: string}>}
      */
-    public function handleRemoveUserRequest(): array
-    {
+    public function handleRemoveUserRequest(
+        string $method,
+        ?string $csrfToken,
+        ?int $userIdToRemove,
+        string $ipAddress = '0.0.0.0'
+    ): array {
         $error = null;
         $success = null;
 
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $csrfToken = $_POST['csrf_token'] ?? '';
-
-            if (!$this->sessionManager->validateCsrfToken($csrfToken)) {
-                http_response_code(403);
+        if ($method === 'POST') {
+            if (!$this->sessionManager->validateCsrfToken($csrfToken ?? '')) {
                 $error = 'Your session expired or form submission was invalid. Please try again.';
             } else {
-                $userIdToRemove = (int)($_POST['user_id'] ?? 0);
+                $userIdToRemove = $userIdToRemove ?? 0;
                 $userRoles = $_SESSION['user_roles'] ?? [];
                 $currentUserId = $_SESSION['user_id'] ?? 0;
 
@@ -119,7 +116,6 @@ class UserController
                         $success = 'User removed successfully.';
 
                         if ($this->auditRepository !== null) {
-                            $ipAddress = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
                             $this->sessionManager->startSession();
                             
                             $this->auditRepository->logEvent(

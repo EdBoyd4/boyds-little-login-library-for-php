@@ -19,26 +19,23 @@ class AuthManager
         private ?AttemptRepository $attemptRepository = null,
         private ?SecurityAuditRepository $auditRepository = null
     ) {
-        $this->enforceHttps();
     }
 
-    public function enforceHttps(): void
+    public function enforceHttps(bool $isHttps, string $host, string $requestUri): ?AuthResult
     {
-        if (empty($_SERVER['HTTPS']) || $_SERVER['HTTPS'] === "off") {
-            $redirect = 'https://' . ($_SERVER['HTTP_HOST'] ?? '') . ($_SERVER['REQUEST_URI'] ?? '');
-            header('Location: ' . $redirect);
-            exit();
+        if (!$isHttps) {
+            $redirect = 'https://' . $host . $requestUri;
+            return new \Boyd\LoginLibrary\Models\AuthResult(false, null, $redirect);
         }
+        return null;
     }
 
     /**
      * @throws Exception If login fails
      */
-    public function login(string $username, string $password): void
+    public function login(string $username, string $password, string $ipAddress = '0.0.0.0'): void
     {
         $this->sessionManager->startSession();
-
-        $ipAddress = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
 
         if ($this->attemptRepository !== null) {
             $recentAttempts = $this->attemptRepository->countRecentAttempts($ipAddress, $this->config->getLockoutTimeSeconds());
@@ -67,6 +64,7 @@ class AuthManager
         $user = $this->userRepository->findByUsername($username);
 
         if (!$user || !password_verify($password, $user->getPasswordHash())) {
+            error_log("LOGIN FAILED. USER EXISTS: " . ($user ? 'YES' : 'NO') . " | GIVEN PASS: " . $password);
             if ($this->attemptRepository !== null) {
                 $this->attemptRepository->recordAttempt($ipAddress, $username);
             }
@@ -90,10 +88,9 @@ class AuthManager
         }
     }
 
-    public function logout(): void
+    public function logout(string $ipAddress = '0.0.0.0'): void
     {
         if ($this->auditRepository !== null) {
-            $ipAddress = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
             $this->sessionManager->startSession();
             $username = $_SESSION['user_name'] ?? null;
             $this->auditRepository->logEvent('logout', $ipAddress, $username, 'User logged out');
@@ -107,35 +104,39 @@ class AuthManager
         return isset($_SESSION['user_id']);
     }
 
-    public function enforceLogin(): void
+    public function enforceLogin(): ?AuthResult
     {
         if (!$this->isLoggedIn()) {
-            header("Location: " . $this->config->getLoginRoute());
-            exit;
+            return new \Boyd\LoginLibrary\Models\AuthResult(false, null, $this->config->getLoginRoute());
         }
         $this->sessionManager->enforceTimeout();
+        return null;
     }
 
-    public function requireRole(string $requiredRole): void
+    public function requireRole(string $requiredRole): ?AuthResult
     {
-        $this->enforceLogin();
+        if ($loginResult = $this->enforceLogin()) {
+            return $loginResult;
+        }
         $userRoles = $_SESSION['user_roles'] ?? [];
         if (!in_array($requiredRole, $userRoles, true)) {
-            header("Location: " . $this->config->getUnauthorizedRoute());
-            exit;
+            return new \Boyd\LoginLibrary\Models\AuthResult(false, null, $this->config->getUnauthorizedRoute());
         }
+        return null;
     }
 
-    public function requireAllRoles(array $requiredRoles): void
+    public function requireAllRoles(array $requiredRoles): ?AuthResult
     {
-        $this->enforceLogin();
+        if ($loginResult = $this->enforceLogin()) {
+            return $loginResult;
+        }
         $userRoles = $_SESSION['user_roles'] ?? [];
         
         foreach ($requiredRoles as $role) {
             if (!in_array($role, $userRoles, true)) {
-                header("Location: " . $this->config->getUnauthorizedRoute());
-                exit;
+                return new \Boyd\LoginLibrary\Models\AuthResult(false, null, $this->config->getUnauthorizedRoute());
             }
         }
+        return null;
     }
 }
