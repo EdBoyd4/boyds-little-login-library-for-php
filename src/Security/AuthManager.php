@@ -8,6 +8,7 @@ use Boyd\LoginLibrary\Repositories\UserRepository;
 use Boyd\LoginLibrary\Repositories\AttemptRepository;
 use Boyd\LoginLibrary\Repositories\SecurityAuditRepository;
 use Boyd\LoginLibrary\Config\LoginConfig;
+use Boyd\LoginLibrary\Models\AuthResult;
 use Exception;
 
 class AuthManager
@@ -25,7 +26,7 @@ class AuthManager
     {
         if (!$isHttps) {
             $redirect = 'https://' . $host . $requestUri;
-            return new \Boyd\LoginLibrary\Models\AuthResult(false, null, $redirect);
+            return new AuthResult(false, null, $redirect);
         }
         return null;
     }
@@ -107,7 +108,7 @@ class AuthManager
     public function enforceLogin(): ?AuthResult
     {
         if (!$this->isLoggedIn()) {
-            return new \Boyd\LoginLibrary\Models\AuthResult(false, null, $this->config->getLoginRoute());
+            return new AuthResult(false, null, $this->config->getLoginRoute());
         }
         $this->sessionManager->enforceTimeout();
         return null;
@@ -120,7 +121,7 @@ class AuthManager
         }
         $userRoles = $_SESSION['user_roles'] ?? [];
         if (!in_array($requiredRole, $userRoles, true)) {
-            return new \Boyd\LoginLibrary\Models\AuthResult(false, null, $this->config->getUnauthorizedRoute());
+            return new AuthResult(false, null, $this->config->getUnauthorizedRoute());
         }
         return null;
     }
@@ -134,7 +135,7 @@ class AuthManager
         
         foreach ($requiredRoles as $role) {
             if (!in_array($role, $userRoles, true)) {
-                return new \Boyd\LoginLibrary\Models\AuthResult(false, null, $this->config->getUnauthorizedRoute());
+                return new AuthResult(false, null, $this->config->getUnauthorizedRoute());
             }
         }
         return null;
