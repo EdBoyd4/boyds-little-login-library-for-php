@@ -35,9 +35,13 @@ class LoginController
             $redirectUrl = $requestedRedirect;
         }
 
-        // 1. If the user is already logged in, destroy their session to ensure a clean slate.
+        // 1. If already logged in, send them where they're going instead of tearing
+        // down a perfectly valid session -- no shared/kiosk-workstation use case
+        // here requires landing on /login.php to force out whoever's currently
+        // signed in (decided 2026-08-16). This also avoids a destroy-then-regenerate
+        // cycle racing a freshly-rendered CSRF token against the very next request.
         if ($this->authManager->isLoggedIn()) {
-            $this->authManager->logout($ipAddress);
+            return new \Boyd\LoginLibrary\Models\AuthResult(true, null, $redirectUrl, null);
         }
 
         $error = null;

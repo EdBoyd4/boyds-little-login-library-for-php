@@ -59,10 +59,15 @@ class SessionManager
     public function regenerate(): void
     {
         if (session_status() === PHP_SESSION_ACTIVE) {
-            // FIXME: session_regenerate_id(true) is dropping cookies on localhost IPv6 (::1) environments
-            // in some browsers (e.g. Chrome) due to strict Secure/SameSite behavior during POST redirects.
-            // MUST re-enable this in production for security against session fixation attacks.
-            // session_regenerate_id(true);
+            // Re-enabled 2026-08-16: the cookie-dropping this was worked around for was
+            // traced to this local dev box's /etc/hosts mapping clariuminvestigations.local
+            // to BOTH 127.0.0.1 and ::1 -- an idle connection could reconnect over the other
+            // IP family and lose the session. Confirmed live: identical login -> 3-minute
+            // wait -> submit sequence failed with the dual-stack mapping in place, succeeded
+            // once the ::1 entry was removed. Already enabled and working on production
+            // (which doesn't have this local-only dual-stack quirk); this brings dev back
+            // in line with it.
+            session_regenerate_id(true);
         }
     }
 
