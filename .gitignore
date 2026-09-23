@@ -12,3 +12,8 @@ Thumbs.db
 # Dependencies
 vendor/
 
+# Test / tooling caches
+.phpunit.cache/
+.phpunit.result.cache
+
+composer.lock
