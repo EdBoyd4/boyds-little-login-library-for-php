@@ -14,7 +14,7 @@ class UserController
         private UserRepository $userRepository,
         private SessionManager $sessionManager,
         private ?SecurityAuditRepository $auditRepository = null,
-        private string $userManagerRole = 'System_Manager'
+        private string $userManagerRole = 'system_manager'
     ) {}
 
     /**

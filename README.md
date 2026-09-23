@@ -18,7 +18,7 @@ A reusable, secure, Object-Oriented PHP login library designed with data securit
 
 ## 📋 Requirements
 
-- PHP >= 8.0
+- PHP >= 8.1 (uses native enums)
 - Composer
 - A relational database (e.g., MySQL, MariaDB) with PDO extension enabled.
 
@@ -33,13 +33,14 @@ A reusable, secure, Object-Oriented PHP login library designed with data securit
 2. **Set up Environment Variables:**
    Copy your `.env.example` to `.env` in your project root and configure your database and application settings. (A template will be provided by your host application).
 
-3. **Initialize the Database Schema:**
-   Import the provided SQL schema into your database. This will create the required tables and insert the default roles (including `system_manager`).
+3. **Create the Database Tables:**
+   Your application owns its schema. `database/create_example_database.php` is the reference for the tables the library expects (and, for a trial run, creates them in an existing empty database, plus the default `system_manager` role). Connection settings come from environment variables so the password never appears in a process list:
    ```bash
-   mysql -u username -p database_name < vendor/ed-boyd/boyds-little-login-library-for-php/database/schema.sql
+   AUTH_DB_NAME=login_example AUTH_DB_USER=username AUTH_DB_PASS=secret \
+     php vendor/ed-boyd/boyds-little-login-library-for-php/database/create_example_database.php
    ```
-   
-   *Note: Because creating users requires the `System_Manager` role, you must create your very first user directly in the database (or via an initial setup script) and map them to the `system_manager` role ID.*
+
+   *Note: Because creating users requires the `system_manager` role, you must create your very first user directly in the database (or via an initial setup script) and map them to the `system_manager` role ID.*
 
 ## ⚙️ Configuration
 
@@ -113,10 +114,115 @@ if ($authManager->login($username, $password, $ipAddress)) {
 $authManager->enforceLogin();
 
 // Optionally, require a specific role
-$authManager->requireRole('System_Manager');
+$authManager->requireRole('system_manager');
 
 // If the script reaches this point, the user is authenticated and authorized!
 ```
+
+### Passwordless Sign-In (Email OTP)
+
+An opt-in, self-contained flow: the user enters an email, receives a short-lived
+numeric code, and enters it to sign in. No password is involved.
+
+The library issues and verifies codes but **does not send email** — you supply a
+mailer by implementing `Boyd\LoginLibrary\Contracts\OtpMailerInterface`. Whatever
+that implementation actually sends mail with (PHPMailer, Symfony Mailer, a raw
+`mail()` call, a transactional email API, ...) is your choice, and its
+dependency belongs in **your own** `composer.json` — this library has none.
+
+```php
+use Boyd\LoginLibrary\Contracts\OtpMailerInterface;
+use Boyd\LoginLibrary\Repositories\OtpRepository;
+use Boyd\LoginLibrary\Security\OtpManager;
+use Boyd\LoginLibrary\Security\OtpVerificationOutcome;
+use Boyd\LoginLibrary\Controllers\SelfServiceOtpController;
+
+final class MyMailer implements OtpMailerInterface
+{
+    public function sendOtp(string $toEmail, string $code, int $ttlSeconds): void
+    {
+        // hand $code to your mail transport; throw on hard failure
+    }
+}
+
+// $config must carry otpHmacKey: a random secret of 32+ characters kept outside
+// the database (e.g. in .env). Generate one with:
+//   php -r 'echo bin2hex(random_bytes(32));'
+$otpManager = OtpManager::fromConfig(
+    new OtpRepository($db, $config->getTableOtpChallenges()),
+    new MyMailer(),
+    $config,
+    $auditRepo            // optional Boyd\LoginLibrary\Contracts\SecurityAuditLoggerInterface
+);
+
+// Step 1 — email a code (neutral response whether or not the address exists)
+$otpManager->startChallenge($email, $ip);
+
+// Step 2 — verify
+$outcome = $otpManager->verifyChallenge($email, $code, $ip);
+if ($outcome === OtpVerificationOutcome::Verified) {
+    $user = $userRepo->findByUsername($email);   // store the email in user_name
+    $authManager->establishPasswordlessSession($user, $ip);
+}
+```
+
+`SelfServiceOtpController` wires both steps to a page (CSRF, redirects, neutral
+messaging, first-time registration); see `examples/otp_login.php`.
+
+**Not a second factor.** A verified code alone establishes a session — there is
+no password check anywhere in this flow. Do not use it as an *alternate* login
+for an account that also has a password: letting either credential suffice on
+its own weakens the account to whichever is weaker, not stronger (see the
+`2FA/MFA` item in `docs/boyds-little-login-library-for-php-TODO.md`). This
+library previously shipped an `OtpController` built for exactly that pattern
+against a pre-registered, password-bearing account; it was removed
+2026-09-23 for this reason.
+
+**Built-in abuse controls:** one live code per address (a new code supersedes the
+old), a per-code attempt ceiling, a resend cooldown, and a per-address hourly
+send cap. Codes are stored only as an HMAC-SHA256 keyed with `otpHmacKey` and
+bound to the address, so a leak of the database alone cannot reveal or forge a
+live code (a plain password hash would not help: a 6-digit code falls to offline
+brute force in minutes). Rotating the key only invalidates codes issued in the
+last few minutes. Tune via `LoginConfig` (`otpCodeLength`, `otpTtlSeconds`,
+`otpMaxAttempts`, `otpResendCooldownSeconds`, `otpMaxSendsPerHour`).
+
+**Session length:** a password session idles out after `sessionTimeoutSeconds`
+(4 hours by default); a session established by a verified code uses the shorter
+`otpSessionTimeoutSeconds` (30 minutes by default).
+
+**Self-service, roles-free store:** `PasswordlessUserRepository` +
+`SelfServiceOtpController` register a first-time verified address in a bare
+`users` table (email + timestamps -- no password, no roles tables); every user
+carries the single fixed role the repository was constructed with.
+
+Schema: the `otp_challenges` and `auth_settings` tables are defined in
+`database/create_example_database.php`.
+
+### Runtime-Adjustable Session Length
+
+By default the idle timeout is the static `LoginConfig::$sessionTimeoutSeconds`.
+Pass a `SettingsRepository` into `SessionManager` and an administrator can change
+it at runtime (stored in `auth_settings`, clamped to the configured min/max):
+
+```php
+$settings = new SettingsRepository($db, $config->getTableAuthSettings());
+$sessionManager = new SessionManager($config, $settings);   // now honours the stored value
+```
+
+`SettingsController` + `SessionSettingsView` provide a ready admin page — see
+`examples/session_settings.php`. With no `SettingsRepository` the behaviour is
+exactly as before.
+
+## 🧪 Tests
+
+```bash
+composer install
+composer test        # or: vendor/bin/phpunit
+```
+
+The suite covers the OTP module end to end (issue, verify, single-use, lockout,
+rate-limit, expiry, supersede, HMAC binding). CI runs it on PHP 8.1–8.3.
 
 ## 📚 Documentation & Examples
 

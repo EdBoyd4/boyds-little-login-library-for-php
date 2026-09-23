@@ -1,11 +1,13 @@
 <?php
+declare(strict_types=1);
+
 require_once __DIR__ . '/init_login.php';
 
 use Boyd\LoginLibrary\Controllers\UserController;
 use Boyd\LoginLibrary\Views\AddUserView;
 
-// Enforce login and System_Manager role
-if ($authResult = $authManager->requireRole('System_Manager')) {
+// Enforce login and system_manager role
+if ($authResult = $authManager->requireRole('system_manager')) {
     header("Location: " . $authResult->redirectUrl);
     exit;
 }

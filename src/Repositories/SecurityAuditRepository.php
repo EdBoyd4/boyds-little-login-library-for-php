@@ -3,9 +3,10 @@ declare(strict_types=1);
 
 namespace Boyd\LoginLibrary\Repositories;
 
+use Boyd\LoginLibrary\Contracts\SecurityAuditLoggerInterface;
 use Boyd\LoginLibrary\Database\Database;
 
-class SecurityAuditRepository
+class SecurityAuditRepository implements SecurityAuditLoggerInterface
 {
     public function __construct(
         private Database $database

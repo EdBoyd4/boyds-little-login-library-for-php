@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 require_once __DIR__ . '/init_login.php';
 
 use Boyd\LoginLibrary\Controllers\PasswordController;

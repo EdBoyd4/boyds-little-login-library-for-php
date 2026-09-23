@@ -26,24 +26,38 @@ class LoginView
                     <h2><?= htmlspecialchars($detailedTitle, ENT_QUOTES, 'UTF-8') ?></h2>
                 <?php endif; ?>
 
-                <?php if ($error): ?>
-                    <div class="error"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></div>
-                <?php endif; ?>
-
-                <form name="login" method="post" action="">
-                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
-                    
-                    <label for="username">Username:</label>
-                    <input type="text" name="username" id="username" required autocomplete="username">
-                    
-                    <label for="password">Password:</label>
-                    <input type="password" name="password" id="password" required autocomplete="current-password">
-                    
-                    <button type="submit" value="login" name="login">Log In</button>
-                </form>
+                <?php $this->renderFragment($csrfToken, $error); ?>
             </div>
         </body>
         </html>
+        <?php
+    }
+
+    /**
+     * Just the error message and the form -- no <html>/<head>/<body>, no page
+     * title, no stylesheet link. For an app that wants to place the login form
+     * inside its own page layout (own chrome, own CSS) instead of render()'s
+     * full standalone page. The caller owns the surrounding <title>/h1/nav; this
+     * only owns the content that depends on login state.
+     */
+    public function renderFragment(string $csrfToken, ?string $error = null): void
+    {
+        ?>
+        <?php if ($error): ?>
+            <div class="error"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></div>
+        <?php endif; ?>
+
+        <form name="login" method="post" action="">
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
+
+            <label for="username">Username:</label>
+            <input type="text" name="username" id="username" required autocomplete="username">
+
+            <label for="password">Password:</label>
+            <input type="password" name="password" id="password" required autocomplete="current-password">
+
+            <button type="submit" value="login" name="login">Log In</button>
+        </form>
         <?php
     }
 }

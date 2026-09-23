@@ -4,10 +4,52 @@ declare(strict_types=1);
 namespace Boyd\LoginLibrary\Security;
 
 use Boyd\LoginLibrary\Config\LoginConfig;
+use Boyd\LoginLibrary\Repositories\SettingsRepository;
 
 class SessionManager
 {
-    public function __construct(private LoginConfig $config) {}
+    // $settings is optional and trailing so existing callers -- including
+    // Clarassign's `new SessionManager($config)` -- are unaffected. When it is
+    // absent the session length is exactly $config->getSessionTimeoutSeconds(),
+    // matching the previous behaviour.
+    public function __construct(
+        private LoginConfig $config,
+        private ?SettingsRepository $settings = null
+    ) {}
+
+    /**
+     * The session length actually enforced: the value an admin stored via
+     * SettingsController if present and sane (clamped to the configured
+     * min/max), otherwise the static config default.
+     */
+    public function getEffectiveTimeoutSeconds(): int
+    {
+        $default = $this->config->getSessionTimeoutSeconds();
+        if ($this->settings === null) {
+            return $default;
+        }
+
+        $stored = $this->settings->get('session_timeout_seconds');
+        if ($stored === null || !ctype_digit($stored)) {
+            return $default;
+        }
+
+        return max(
+            $this->config->getSessionTimeoutSecondsMin(),
+            min($this->config->getSessionTimeoutSecondsMax(), (int)$stored)
+        );
+    }
+
+    /**
+     * The idle timeout for the CURRENT session: the value AuthManager stamped
+     * when it established a code-login session, otherwise the password-session
+     * timeout from getEffectiveTimeoutSeconds().
+     */
+    public function currentSessionTimeoutSeconds(): int
+    {
+        $stamped = $_SESSION['session_timeout_seconds'] ?? null;
+        return is_int($stamped) && $stamped > 0 ? $stamped : $this->getEffectiveTimeoutSeconds();
+    }
 
     public function startSession(): void
     {
@@ -75,7 +117,7 @@ class SessionManager
     {
         $this->startSession();
         
-        $timeout = $this->config->getSessionTimeoutSeconds();
+        $timeout = $this->currentSessionTimeoutSeconds();
         if (isset($_SESSION['login_timestamp']) && (time() - $_SESSION['login_timestamp'] > $timeout)) {
             $this->destroySession();
             header("Location: " . $this->config->getLoginRoute() . "?timeout=1");
