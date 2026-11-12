@@ -77,6 +77,18 @@ class SessionManager
             // Set secure cookie params before starting session
             session_set_cookie_params($cookieParams);
 
+            // enforceTimeout() is the real idle limit, but PHP's own session GC
+            // deletes the server-side session file after session.gc_maxlifetime
+            // (default 1440s) of inactivity regardless -- so on a host that
+            // keeps the default, logins die in ~24 minutes no matter what the
+            // configured timeout says. Raise it to the longest timeout that can
+            // ever be enforced.
+            ini_set('session.gc_maxlifetime', (string)max(
+                $this->config->getSessionTimeoutSecondsMax(),
+                $this->config->getSessionTimeoutSeconds(),
+                $this->config->getOtpSessionTimeoutSeconds()
+            ));
+
             session_start();
         }
     }
